@@ -1,5 +1,8 @@
 package com.adarshgs.auth_workshop.config;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -12,6 +15,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -22,22 +28,37 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
-            // .exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(
-            //     (request, response, exception) -> {
-            //         response.sendError(HttpServletResponse.SC_UNAUTHORIZED, exception.getMessage());
-            //     }
-            // ))
+            .csrf(AbstractHttpConfigurer::disable)
+            .cors(Customizer.withDefaults())
+            .exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(
+                (request, response, exception) -> {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, exception.getMessage());
+                }
+            ))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/hello/public/**").permitAll()
                 .requestMatchers("/hello/private/**").hasAnyRole("PRO_USER", "ADMIN")
                 .requestMatchers("/hello/admin/**").hasRole("ADMIN")
-                .requestMatchers("/login", "/login/**").permitAll()
+                .requestMatchers( "/auth/**").permitAll()
                 .anyRequest().authenticated()
             )
-            .formLogin(Customizer.withDefaults());
-            // .httpBasic(Customizer.withDefaults());
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(Customizer.withDefaults());
         
         return httpSecurity.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+            CorsConfiguration configuration = new CorsConfiguration();
+            configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://127.0.0.1:5173"));
+            configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+            configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
+
+            UrlBasedCorsConfigurationSource corsConfigurationSource = new UrlBasedCorsConfigurationSource();
+            corsConfigurationSource.registerCorsConfiguration("/**", configuration);
+
+            return corsConfigurationSource;
     }
 
     @Bean
