@@ -22,11 +22,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
-            .exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(
-                (request, response, exception) -> {
-                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, exception.getMessage());
-                }
-            ))
+            // .exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(
+            //     (request, response, exception) -> {
+            //         response.sendError(HttpServletResponse.SC_UNAUTHORIZED, exception.getMessage());
+            //     }
+            // ))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/hello/public/**").permitAll()
                 .requestMatchers("/hello/private/**").hasAnyRole("PRO_USER", "ADMIN")
@@ -34,8 +34,8 @@ public class SecurityConfig {
                 .requestMatchers("/login", "/login/**").permitAll()
                 .anyRequest().authenticated()
             )
-            .formLogin(AbstractHttpConfigurer::disable)
-            .httpBasic(Customizer.withDefaults());
+            .formLogin(Customizer.withDefaults());
+            // .httpBasic(Customizer.withDefaults());
         
         return httpSecurity.build();
     }
