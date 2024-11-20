@@ -31,11 +31,13 @@ public class SecurityConfig {
             ))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/hello/public/**").permitAll()
+                .requestMatchers("/hello/private/**").hasAnyRole("PRO_USER", "ADMIN")
+                .requestMatchers("/hello/admin/**").hasRole("ADMIN")
                 .requestMatchers("/login", "/login/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionCreationPolicy(SessionCreationPolicy.NEVER)
             )
             .formLogin(AbstractHttpConfigurer::disable)
             .httpBasic(Customizer.withDefaults());
@@ -53,9 +55,22 @@ public class SecurityConfig {
 
         UserDetails user = User.builder()
             .username("adarshgs")
+            .roles("USER")
             .password(passwordEncoder().encode("adarshgs"))
             .build();
 
-        return new InMemoryUserDetailsManager(user);
+        UserDetails prouser = User.builder()
+            .username("prouser")
+            .roles("PRO_USER")
+            .password(passwordEncoder().encode("prouser123"))
+            .build();
+
+        UserDetails admin = User.builder()
+            .username("admin")
+            .roles("ADMIN")
+            .password(passwordEncoder().encode("admin123"))
+            .build();
+
+        return new InMemoryUserDetailsManager(user, prouser, admin);
     }
 }
